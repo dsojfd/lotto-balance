@@ -209,12 +209,18 @@ export async function loadAppData(
   storage: Storage = localStorage,
 ): Promise<AppDataState> {
   const cached = readCachedBundle(storage);
+  let network: AppDataBundle;
   try {
-    const network = await fetchNetworkBundle(fetcher);
-    persistBundle(storage, network);
-    return { ...network, isOfflineFallback: false };
+    network = await fetchNetworkBundle(fetcher);
   } catch {
     if (cached) return { ...cached, isOfflineFallback: true };
     throw new Error('로또 데이터를 불러올 수 없습니다. 네트워크 연결을 확인한 뒤 다시 시도해 주세요.');
   }
+
+  try {
+    persistBundle(storage, network);
+  } catch {
+    // The validated network bundle remains usable when device cache persistence fails.
+  }
+  return { ...network, isOfflineFallback: false };
 }

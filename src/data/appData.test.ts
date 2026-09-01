@@ -111,7 +111,7 @@ describe('loadAppData', () => {
     expect(cacheKeys.map((key) => storage.getItem(key))).toEqual(oldValues);
   });
 
-  it('restores the whole prior cache bundle when persistence stops midway', async () => {
+  it('returns the valid network bundle and restores the prior cache when persistence stops midway', async () => {
     const storage = new MemoryStorage();
     cacheBundle(storage);
     const oldValues = cacheKeys.map((key) => storage.getItem(key));
@@ -127,8 +127,18 @@ describe('loadAppData', () => {
       return new Response(JSON.stringify(newerBacktest));
     }, storage);
 
-    expect(state.isOfflineFallback).toBe(true);
+    expect(state).toMatchObject({ dataset: newerDataset, isOfflineFallback: false });
     expect(cacheKeys.map((key) => storage.getItem(key))).toEqual(oldValues);
+  });
+
+  it('returns a valid network bundle even when an empty cache cannot be written', async () => {
+    const storage = new MemoryStorage();
+    storage.failWritesFor(cacheKeys[0]);
+
+    const state = await loadAppData(async (url) => responseFor(String(url)), storage);
+
+    expect(state).toMatchObject({ dataset, analysis, backtest, isOfflineFallback: false });
+    expect(cacheKeys.map((key) => storage.getItem(key))).toEqual([null, null, null]);
   });
 
   it('blocks in Korean when neither network nor cache contains one coherent bundle', async () => {
