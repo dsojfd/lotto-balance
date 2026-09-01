@@ -1,17 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { installManifest, pwaOptions } from './vite.config';
+import { pwaOptions } from './vite.config';
 
 describe('PWA configuration', () => {
-  it('uses auto-update and an installable Korean manifest', () => {
+  it('uses auto-update while the public manifest remains the single install authority', () => {
     expect(pwaOptions.registerType).toBe('autoUpdate');
     expect(pwaOptions.manifest).toBe(false);
-    expect(installManifest).toMatchObject({
-      name: '로또 밸런스',
-      short_name: '로또',
-      display: 'standalone',
-      start_url: './',
-      scope: './',
-    });
   });
 
   it('keeps project-base data JSON responses with bounded count and no age expiry', () => {
