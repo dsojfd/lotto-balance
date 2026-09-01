@@ -118,7 +118,7 @@ function analyzeWindow(draws: readonly Draw[]): AnalysisWindow {
   const fixedSectionCounts = createFixedSectionCounts();
   const pairCounts: Histogram = {};
   const previousDrawReuse: Histogram = Object.fromEntries(
-    Array.from({ length: 45 }, (_, index) => [String(index + 1), 0]),
+    Array.from({ length: 7 }, (_, index) => [String(index), 0]),
   );
 
   draws.forEach((draw, drawIndex) => {
@@ -149,9 +149,8 @@ function analyzeWindow(draws: readonly Draw[]): AnalysisWindow {
 
     if (drawIndex > 0) {
       const previousNumbers = new Set(draws[drawIndex - 1].numbers);
-      draw.numbers.forEach((number) => {
-        if (previousNumbers.has(number)) previousDrawReuse[String(number)] += 1;
-      });
+      const overlapCount = draw.numbers.filter((number) => previousNumbers.has(number)).length;
+      increment(previousDrawReuse, overlapCount);
     }
   });
 

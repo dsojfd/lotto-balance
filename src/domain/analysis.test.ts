@@ -58,14 +58,21 @@ describe('analyzeDraws', () => {
     });
   });
 
-  it('counts reuses across only consecutive draws and carries its comparison sample size', () => {
+  it('histograms main-number overlap counts across consecutive-draw transitions', () => {
     const window = analyzeDraws(draws).windows.all;
 
-    expect(window.previousDrawReuse['1']).toBe(1);
-    expect(window.previousDrawReuse['7']).toBe(1);
-    expect(window.previousDrawReuse['28']).toBe(1);
-    expect(window.previousDrawReuse['45']).toBe(0);
+    expect(window.previousDrawReuse).toEqual({
+      0: 0,
+      1: 1,
+      2: 1,
+      3: 0,
+      4: 0,
+      5: 0,
+      6: 0,
+    });
     expect(window.previousDrawReuseSampleSize).toBe(2);
+    expect(Object.values(window.previousDrawReuse).reduce((total, count) => total + count, 0))
+      .toBe(window.previousDrawReuseSampleSize);
   });
 
   it('uses each available draw when a requested recent window is larger than the history', () => {
@@ -98,6 +105,6 @@ describe('analyzeDraws', () => {
     const window = analyzeDraws([draws[2]]).windows.all;
 
     expect(window.previousDrawReuseSampleSize).toBe(0);
-    expect(window.previousDrawReuse['7']).toBe(0);
+    expect(window.previousDrawReuse).toEqual({ 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 });
   });
 });
