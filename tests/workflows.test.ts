@@ -91,4 +91,18 @@ describe('GitHub Actions workflows', () => {
     expect(workflow).toContain('git push');
     expect(workflow).toMatch(/path:\s*dist/);
   });
+
+  it('gates the Pages data commit and artifact on Chromium E2E', async () => {
+    const workflow = await readWorkflow('pages.yml');
+
+    expectInOrder(workflow, [
+      'npx playwright install --with-deps chromium',
+      'npm run build',
+      'npm run e2e',
+      'Commit validated draw data',
+      'actions/upload-pages-artifact@v5',
+      'needs: build',
+      'actions/deploy-pages@v5',
+    ]);
+  });
 });

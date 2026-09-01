@@ -27,12 +27,14 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npx playwright install --with-deps chromium
       - name: Update official draw data
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: npm run data:update
       - run: npm test
       - run: npm run reports:build
       - run: npm run build
+      - run: npm run e2e
       - name: Commit validated draw data
         if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
         run: |

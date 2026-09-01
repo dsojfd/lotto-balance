@@ -32,6 +32,10 @@ test('mobile user generates, saves, and reopens five games', async ({ page }) =>
 test('all main screens fit without horizontal overflow at 320px', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 800 });
   await openApp(page);
+  await page.getByRole('button', { name: '무작위 추천' }).click();
+  await page.getByRole('button', { name: '10게임' }).click();
+  await page.getByRole('button', { name: '추천번호 생성' }).click();
+  await expect(page.locator('[aria-label^="추천 조합 "]')).toHaveCount(10);
 
   for (const tab of ['추천', '분석', '검증', '저장']) {
     await page.getByRole('tab', { name: tab, exact: true }).click();
@@ -67,6 +71,8 @@ test('user can read the verification conclusion', async ({ page }) => {
 });
 
 test('saved games remain after a reload', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  expect(page.viewportSize()).toMatchObject({ width: 360 });
   await openApp(page);
   await generateAndSaveFiveGames(page);
 
@@ -94,6 +100,8 @@ test('invalid network data falls back to the last validated bundle', async ({ pa
 });
 
 test('service worker reloads the app offline after one online visit', async ({ page, context }) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  expect(page.viewportSize()).toMatchObject({ width: 320 });
   await openApp(page);
   await expect.poll(() => page.evaluate(async () => (
     await navigator.serviceWorker.getRegistrations()
