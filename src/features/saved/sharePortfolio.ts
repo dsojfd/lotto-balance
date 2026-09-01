@@ -1,5 +1,10 @@
 import type { SavedPortfolio } from '../../data/savedPortfolios';
 
+export type ShareablePortfolio = Pick<
+  SavedPortfolio,
+  'targetDrawNo' | 'mode' | 'createdAt' | 'combinations'
+>;
+
 export interface ShareDependencies {
   share?: (data: ShareData) => Promise<void>;
   clipboard?: Pick<Clipboard, 'writeText'>;
@@ -7,11 +12,11 @@ export interface ShareDependencies {
 
 export type SharePortfolioResult = 'shared' | 'copied';
 
-function modeLabel(mode: SavedPortfolio['mode']): string {
+function modeLabel(mode: ShareablePortfolio['mode']): string {
   return mode === 'balanced' ? '균형·분산 추천' : '무작위 추천';
 }
 
-export function buildPortfolioShareText(portfolio: SavedPortfolio): string {
+export function buildPortfolioShareText(portfolio: ShareablePortfolio): string {
   return [
     '로또 밸런스',
     `대상 회차: 제${portfolio.targetDrawNo}회`,
@@ -23,7 +28,7 @@ export function buildPortfolioShareText(portfolio: SavedPortfolio): string {
 }
 
 export async function copyPortfolio(
-  portfolio: SavedPortfolio,
+  portfolio: ShareablePortfolio,
   clipboard: Pick<Clipboard, 'writeText'> | undefined,
 ): Promise<void> {
   if (!clipboard) throw new Error('클립보드를 사용할 수 없습니다.');
@@ -31,7 +36,7 @@ export async function copyPortfolio(
 }
 
 export async function sharePortfolio(
-  portfolio: SavedPortfolio,
+  portfolio: ShareablePortfolio,
   dependencies: ShareDependencies,
 ): Promise<SharePortfolioResult> {
   const text = buildPortfolioShareText(portfolio);

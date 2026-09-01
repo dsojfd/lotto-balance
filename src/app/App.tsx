@@ -18,15 +18,29 @@ interface AppProps {
   savedPortfolioStore?: Pick<SavedPortfolioStore, 'save'> & Partial<Pick<SavedPortfolioStore, 'list' | 'delete'>>;
 }
 
+type AppLoadState =
+  | { status: 'loading' }
+  | { status: 'ready'; data: AppDataState }
+  | { status: 'error'; message: string };
+
 function formatUpdatedAt(value: string): string {
   const date = new Date(value);
-  return `${date.getUTCFullYear()}. ${date.getUTCMonth() + 1}. ${date.getUTCDate()}.`;
+  const parts = Object.fromEntries(new Intl.DateTimeFormat('ko-KR', {
+    timeZone: 'Asia/Seoul',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date).map(({ type, value: partValue }) => [type, partValue]));
+  return `${parts.year}. ${Number(parts.month)}. ${Number(parts.day)}. ${parts.hour}:${parts.minute} KST`;
 }
 
 export function App({ loadData = loadAppData, randomSourceFactory, savedPortfolioStore }: AppProps) {
-  const [data, setData] = useState<AppDataState>();
-  const [error, setError] = useState<string>();
+  const [loadState, setLoadState] = useState<AppLoadState>({ status: 'loading' });
   const [tab, setTab] = useState<Tab>('추천');
+  const data = loadState.status === 'ready' ? loadState.data : undefined;
   const deviceStore = useMemo(() => new SavedPortfolioStore(localStorage), []);
   const store = savedPortfolioStore ?? deviceStore;
   const readableStore = store.list && store.delete
@@ -49,9 +63,17 @@ export function App({ loadData = loadAppData, randomSourceFactory, savedPortfoli
 
   useEffect(() => {
     let mounted = true;
+    setLoadState({ status: 'loading' });
     loadData()
-      .then((nextData) => { if (mounted) setData(nextData); })
-      .catch(() => { if (mounted) setError('로또 데이터를 불러오지 못했습니다. 네트워크 연결을 확인한 뒤 다시 시도해 주세요.'); });
+      .then((nextData) => { if (mounted) setLoadState({ status: 'ready', data: nextData }); })
+      .catch(() => {
+        if (mounted) {
+          setLoadState({
+            status: 'error',
+            message: '로또 데이터를 불러오지 못했습니다. 네트워크 연결을 확인한 뒤 다시 시도해 주세요.',
+          });
+        }
+      });
     return () => { mounted = false; };
   }, [loadData]);
 
@@ -62,13 +84,16 @@ export function App({ loadData = loadAppData, randomSourceFactory, savedPortfoli
           <p className="eyebrow">로또 6/45</p>
           <h1>로또 밸런스</h1>
         </div>
-        <p className="data-status">
-          {data ? `제${data.dataset.latestDraw}회 기준 · 갱신 ${formatUpdatedAt(data.dataset.generatedAt)}` : '데이터를 불러오는 중입니다.'}
-        </p>
+        {loadState.status === 'loading' && <p className="data-status">최신 데이터를 불러오는 중입니다.</p>}
+        {data && <p className="data-status">제{data.dataset.latestDraw}회 기준 · 갱신 {formatUpdatedAt(data.dataset.generatedAt)}</p>}
       </header>
 
-      {data?.isOfflineFallback && <StatusBanner>오프라인 저장 데이터로 표시 중입니다.</StatusBanner>}
-      {error && <StatusBanner tone="error">{error}</StatusBanner>}
+      {data?.isOfflineFallback && (
+        <StatusBanner>
+          오프라인 · 제{data.dataset.latestDraw}회 저장 데이터 사용 중 · 마지막 갱신 {formatUpdatedAt(data.dataset.generatedAt)}
+        </StatusBanner>
+      )}
+      {loadState.status === 'error' && <StatusBanner tone="error">{loadState.message}</StatusBanner>}
 
       <div className="app-content">
         {data && tab === '추천' && (
@@ -95,7 +120,7 @@ export function App({ loadData = loadAppData, randomSourceFactory, savedPortfoli
 
       <nav className="bottom-nav" aria-label="주요 메뉴" role="tablist">
         {tabs.map((name) => (
-          <button key={name} id={`tab-${name}`} type="button" role="tab" aria-selected={tab === name} aria-controls={`panel-${name}`} onClick={() => selectTab(name)} onKeyDown={(event) => {
+          <button key={name} id={`tab-${name}`} type="button" role="tab" aria-selected={tab === name} aria-controls={`panel-${name}`} tabIndex={tab === name ? 0 : -1} onClick={() => selectTab(name)} onKeyDown={(event) => {
             if (['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) {
               event.preventDefault();
               moveTab(name, event.key);

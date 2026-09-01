@@ -181,6 +181,18 @@ async function fetchNetworkBundle(fetcher: AppDataFetcher): Promise<AppDataBundl
   return parseBundle({ dataset, analysis, backtest });
 }
 
+async function canReachOrigin(fetcher: AppDataFetcher): Promise<boolean> {
+  try {
+    const response = await fetcher('./manifest.webmanifest', {
+      method: 'HEAD',
+      cache: 'no-store',
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
 function persistBundle(storage: Storage, bundle: AppDataBundle): void {
   const entries = [
     [APP_DATA_CACHE_KEYS.dataset, JSON.stringify(bundle.dataset)],
@@ -222,5 +234,5 @@ export async function loadAppData(
   } catch {
     // The validated network bundle remains usable when device cache persistence fails.
   }
-  return { ...network, isOfflineFallback: false };
+  return { ...network, isOfflineFallback: !(await canReachOrigin(fetcher)) };
 }

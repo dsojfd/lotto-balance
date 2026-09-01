@@ -29,6 +29,19 @@ test('mobile user generates, saves, and reopens five games', async ({ page }) =>
   await expect(page.getByRole('article', { name: /저장 기록/ })).toBeVisible();
 });
 
+test('saved actions keep a minimum 44px touch target', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await openApp(page);
+  await generateAndSaveFiveGames(page);
+  await page.getByRole('tab', { name: '저장' }).click();
+
+  const record = page.getByRole('article', { name: /저장 기록/ });
+  for (const name of ['공유', '복사', /삭제/]) {
+    const box = await record.getByRole('button', { name }).boundingBox();
+    expect(box?.height).toBeGreaterThanOrEqual(44);
+  }
+});
+
 test('all main screens fit without horizontal overflow at 320px', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 800 });
   await openApp(page);
@@ -95,11 +108,11 @@ test('invalid network data falls back to the last validated bundle', async ({ pa
   });
   await page.reload();
 
-  await expect(page.getByText('오프라인 저장 데이터로 표시 중입니다.')).toBeVisible();
+  await expect(page.getByText(/오프라인.*저장 데이터 사용 중/)).toBeVisible();
   await expect(page.getByText(currentDrawStatus, { exact: true })).toBeVisible();
 });
 
-test('service worker reloads the app offline after one online visit', async ({ page, context }) => {
+test('controlled service worker reports offline provenance after serving its populated runtime data cache', async ({ page, context }) => {
   await page.setViewportSize({ width: 320, height: 800 });
   expect(page.viewportSize()).toMatchObject({ width: 320 });
   await openApp(page);
@@ -108,12 +121,19 @@ test('service worker reloads the app offline after one online visit', async ({ p
   ).length)).toBe(1);
   await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
 
+  await page.reload();
+  await expect.poll(() => page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+  await expect(page.getByText(/제\d+회 기준/)).toBeVisible();
+  await expect.poll(() => page.evaluate(async () => (
+    await (await caches.open('lotto-public-data-v1')).keys()
+  ).filter((request) => /\/data\/.*\.json$/.test(new URL(request.url).pathname)).length)).toBe(3);
+
   await context.setOffline(true);
   try {
     await page.reload();
     await expect(page.getByRole('heading', { name: '로또 밸런스' })).toBeVisible();
     await expect(page.getByText(/제\d+회 기준/)).toBeVisible();
-    await expect(page.getByText('오프라인 저장 데이터로 표시 중입니다.')).toBeVisible();
+    await expect(page.getByText(/오프라인.*저장 데이터 사용 중/)).toBeVisible();
   } finally {
     await context.setOffline(false);
   }

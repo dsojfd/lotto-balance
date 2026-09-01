@@ -81,10 +81,25 @@ describe('loadAppData', () => {
       ['./data/draws.json', { cache: 'no-store' }],
       ['./data/analysis.json', { cache: 'no-store' }],
       ['./data/backtest.json', { cache: 'no-store' }],
+      ['./manifest.webmanifest', { method: 'HEAD', cache: 'no-store' }],
     ]);
     expect(cacheKeys.map((key) => storage.getItem(key))).toEqual([
       JSON.stringify(dataset), JSON.stringify(analysis), JSON.stringify(backtest),
     ]);
+  });
+
+  it('marks a validated service-worker data response as offline when the origin probe cannot connect', async () => {
+    const storage = new MemoryStorage();
+    const calls: Array<[string, RequestInit | undefined]> = [];
+
+    const state = await loadAppData(async (url, init) => {
+      calls.push([String(url), init]);
+      if (init?.method === 'HEAD') throw new TypeError('network offline');
+      return responseFor(String(url));
+    }, storage);
+
+    expect(state).toMatchObject({ dataset, analysis, backtest, isOfflineFallback: true });
+    expect(calls.at(-1)).toEqual(['./manifest.webmanifest', { method: 'HEAD', cache: 'no-store' }]);
   });
 
   it('uses only the complete cached bundle when every network payload is invalid', async () => {

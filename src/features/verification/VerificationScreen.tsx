@@ -8,10 +8,11 @@ function formatValue(value: number): string {
   return value.toFixed(3);
 }
 
-function ModeResults({ label, metrics }: { label: string; metrics: ModeBacktestMetrics }) {
+function ModeResults({ id, label, metrics }: { id: 'balanced' | 'random'; label: string; metrics: ModeBacktestMetrics }) {
+  const headingId = `verification-mode-${id}-heading`;
   return (
-    <section className="verification-mode" aria-labelledby={`${label}-heading`}>
-      <h3 id={`${label}-heading`}>{label}</h3>
+    <section className="verification-mode" aria-labelledby={headingId}>
+      <h3 id={headingId}>{label}</h3>
       <p>평균 일치 수 {formatValue(metrics.meanMainMatches)}</p>
       <ul className="match-distribution" aria-label={`${label} 본번호 일치 수 분포`}>
         {metrics.mainMatchDistribution.map((count, matches) => <li key={matches}>{matches}개 일치 {count}</li>)}
@@ -39,8 +40,8 @@ export function VerificationScreen({ report }: VerificationScreenProps) {
       </section>
 
       <div className="verification-grid">
-        <ModeResults label="균형·분산 방식" metrics={report.metrics.balanced} />
-        <ModeResults label="무작위 방식" metrics={report.metrics.random} />
+        <ModeResults id="balanced" label="균형·분산 방식" metrics={report.metrics.balanced} />
+        <ModeResults id="random" label="무작위 방식" metrics={report.metrics.random} />
       </div>
 
       <section className="verification-interval" aria-label="평균 일치 수 차이 불확실성">

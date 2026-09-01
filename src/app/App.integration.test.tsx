@@ -46,8 +46,8 @@ const appData: AppDataState = {
 it('shows the data status, offline banner, recommendation shell, and four tabs', async () => {
   render(<App loadData={() => Promise.resolve(appData)} />);
 
-  expect(await screen.findByText('제1201회 기준 · 갱신 2026. 8. 30.')).toBeVisible();
-  expect(screen.getByText('오프라인 저장 데이터로 표시 중입니다.')).toBeVisible();
+  expect(await screen.findByText('제1201회 기준 · 갱신 2026. 8. 30. 21:00 KST')).toBeVisible();
+  expect(screen.getByText(/오프라인.*제1201회 저장 데이터 사용 중/)).toBeVisible();
   for (const name of ['추천', '분석', '검증', '저장']) {
     expect(screen.getByRole('tab', { name })).toBeVisible();
   }
@@ -58,6 +58,36 @@ it('shows a Korean fatal-data message when data loading fails', async () => {
   render(<App loadData={() => Promise.reject(new Error('failed'))} />);
 
   expect(await screen.findByRole('alert')).toHaveTextContent('로또 데이터를 불러오지 못했습니다.');
+  expect(screen.queryByText(/불러오는 중입니다/)).not.toBeInTheDocument();
+});
+
+it('keeps only the selected tab in the sequential focus order and moves selection with arrow, Home, and End keys', async () => {
+  const user = userEvent.setup();
+  render(<App loadData={() => Promise.resolve(appData)} />);
+
+  const recommend = await screen.findByRole('tab', { name: '추천' });
+  const analysisTab = screen.getByRole('tab', { name: '분석' });
+  const verification = screen.getByRole('tab', { name: '검증' });
+  const saved = screen.getByRole('tab', { name: '저장' });
+  expect(recommend).toHaveAttribute('tabindex', '0');
+  for (const inactive of [analysisTab, verification, saved]) {
+    expect(inactive).toHaveAttribute('tabindex', '-1');
+    expect(inactive).toHaveAttribute('aria-selected', 'false');
+  }
+
+  recommend.focus();
+  await user.keyboard('{ArrowRight}');
+  expect(analysisTab).toHaveFocus();
+  expect(analysisTab).toHaveAttribute('tabindex', '0');
+  expect(recommend).toHaveAttribute('tabindex', '-1');
+  expect(screen.getByRole('tabpanel', { name: '분석' })).toHaveAttribute('aria-labelledby', analysisTab.id);
+
+  await user.keyboard('{End}');
+  expect(saved).toHaveFocus();
+  expect(saved).toHaveAttribute('tabindex', '0');
+  await user.keyboard('{Home}');
+  expect(recommend).toHaveFocus();
+  expect(recommend).toHaveAttribute('tabindex', '0');
 });
 
 it('switches from recommendation to analysis and verification tabs with tab semantics', async () => {

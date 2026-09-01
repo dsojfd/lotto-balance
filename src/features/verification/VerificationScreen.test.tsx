@@ -31,3 +31,16 @@ it('shows inputs, distributions, uncertainty, and the report conclusion without 
   expect(screen.getByText('무작위 대비 우위 확인 안 됨')).toBeVisible();
   expect(screen.getByText(/시드 난수는 보고서 재현용/)).toBeVisible();
 });
+
+it('connects each comparison region to a fixed whitespace-free heading id', () => {
+  render(<VerificationScreen report={reportIncludingZero} />);
+
+  const balancedHeading = screen.getByRole('heading', { name: '균형·분산 방식' });
+  const randomHeading = screen.getByRole('heading', { name: '무작위 방식' });
+  expect(balancedHeading).toHaveAttribute('id', 'verification-mode-balanced-heading');
+  expect(randomHeading).toHaveAttribute('id', 'verification-mode-random-heading');
+  for (const heading of [balancedHeading, randomHeading]) {
+    expect(heading.id).not.toMatch(/\s/);
+    expect(heading.closest('section')).toHaveAttribute('aria-labelledby', heading.id);
+  }
+});
