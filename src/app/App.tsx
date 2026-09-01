@@ -5,11 +5,11 @@ import type { RandomSource } from '../domain/random';
 import { AnalysisScreen } from '../features/analysis/AnalysisScreen';
 import { RecommendScreen } from '../features/recommend/RecommendScreen';
 import { SavedScreen } from '../features/saved/SavedScreen';
-import { VerificationScreen } from '../features/verification/VerificationScreen';
+import { ExpectedGameScreen } from '../features/simulation/ExpectedGameScreen';
 import { StatusBanner } from '../ui/StatusBanner';
 import './styles.css';
 
-const tabs = ['추천', '분석', '검증', '저장'] as const;
+const tabs = ['추천', '분석', '예상게임', '저장'] as const;
 type Tab = typeof tabs[number];
 
 interface AppProps {
@@ -106,9 +106,9 @@ export function App({ loadData = loadAppData, randomSourceFactory, savedPortfoli
             <AnalysisScreen report={data.analysis.metrics} />
           </section>
         )}
-        {data && tab === '검증' && (
-          <section role="tabpanel" id="panel-검증" aria-labelledby="tab-검증">
-            <VerificationScreen report={data.backtest} />
+        {data && tab === '예상게임' && (
+          <section role="tabpanel" id="panel-예상게임" aria-labelledby="tab-예상게임">
+            <ExpectedGameScreen draws={data.dataset.draws} randomSourceFactory={randomSourceFactory} />
           </section>
         )}
         {data && tab === '저장' && (
@@ -126,7 +126,7 @@ export function App({ loadData = loadAppData, randomSourceFactory, savedPortfoli
               moveTab(name, event.key);
             }
           }}>
-            <span aria-hidden="true">{name === '추천' ? '✦' : name === '분석' ? '◫' : name === '검증' ? '✓' : '▣'}</span>
+            <span aria-hidden="true">{name === '추천' ? '✦' : name === '분석' ? '◫' : name === '예상게임' ? '◇' : '▣'}</span>
             {name}
           </button>
         ))}

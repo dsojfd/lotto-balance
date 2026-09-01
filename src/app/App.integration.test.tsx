@@ -48,7 +48,7 @@ it('shows the data status, offline banner, recommendation shell, and four tabs',
 
   expect(await screen.findByText('제1201회 기준 · 갱신 2026. 8. 30. 21:00 KST')).toBeVisible();
   expect(screen.getByText(/오프라인.*제1201회 저장 데이터 사용 중/)).toBeVisible();
-  for (const name of ['추천', '분석', '검증', '저장']) {
+  for (const name of ['추천', '분석', '예상게임', '저장']) {
     expect(screen.getByRole('tab', { name })).toBeVisible();
   }
   expect(screen.getByRole('tab', { name: '추천' })).toHaveAttribute('aria-selected', 'true');
@@ -67,10 +67,10 @@ it('keeps only the selected tab in the sequential focus order and moves selectio
 
   const recommend = await screen.findByRole('tab', { name: '추천' });
   const analysisTab = screen.getByRole('tab', { name: '분석' });
-  const verification = screen.getByRole('tab', { name: '검증' });
+  const simulation = screen.getByRole('tab', { name: '예상게임' });
   const saved = screen.getByRole('tab', { name: '저장' });
   expect(recommend).toHaveAttribute('tabindex', '0');
-  for (const inactive of [analysisTab, verification, saved]) {
+  for (const inactive of [analysisTab, simulation, saved]) {
     expect(inactive).toHaveAttribute('tabindex', '-1');
     expect(inactive).toHaveAttribute('aria-selected', 'false');
   }
@@ -90,7 +90,7 @@ it('keeps only the selected tab in the sequential focus order and moves selectio
   expect(recommend).toHaveAttribute('tabindex', '0');
 });
 
-it('switches from recommendation to analysis and verification tabs with tab semantics', async () => {
+it('switches from recommendation to analysis and expected-game tabs with tab semantics', async () => {
   const user = userEvent.setup();
   render(<App loadData={() => Promise.resolve(appData)} />);
 
@@ -98,9 +98,10 @@ it('switches from recommendation to analysis and verification tabs with tab sema
   expect(screen.getByRole('tab', { name: '분석' })).toHaveAttribute('aria-selected', 'true');
   expect(screen.getByRole('tabpanel', { name: '분석' })).toBeVisible();
 
-  await user.click(screen.getByRole('tab', { name: '검증' }));
-  expect(screen.getByRole('tab', { name: '검증' })).toHaveAttribute('aria-selected', 'true');
-  expect(screen.getByRole('tabpanel', { name: '검증' })).toBeVisible();
+  await user.click(screen.getByRole('tab', { name: '예상게임' }));
+  expect(screen.getByRole('tab', { name: '예상게임' })).toHaveAttribute('aria-selected', 'true');
+  expect(screen.getByRole('tabpanel', { name: '예상게임' })).toBeVisible();
+  expect(screen.getByRole('heading', { name: '가상 로또 추첨' })).toBeVisible();
 
   await user.keyboard('{ArrowRight}');
   expect(screen.getByRole('tab', { name: '저장' })).toHaveFocus();
