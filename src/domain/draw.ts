@@ -29,6 +29,13 @@ function isCalendarDate(value: string): boolean {
     && date.getUTCDate() === day;
 }
 
+function isCanonicalUtcInstant(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)) return false;
+
+  const timestamp = Date.parse(value);
+  return !Number.isNaN(timestamp) && new Date(timestamp).toISOString() === value;
+}
+
 function validateDraw(raw: unknown, expectedDrawNo: number): Draw {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     throw new Error(`${expectedDrawNo}회 데이터가 객체가 아닙니다.`);
@@ -74,7 +81,7 @@ export function parseDrawDataset(raw: unknown): DrawDataset {
   if (data.schemaVersion !== 1 || !Array.isArray(data.draws) || data.draws.length === 0) {
     throw new Error('지원하지 않는 데이터셋입니다.');
   }
-  if (typeof data.generatedAt !== 'string' || Number.isNaN(Date.parse(data.generatedAt))) {
+  if (typeof data.generatedAt !== 'string' || !isCanonicalUtcInstant(data.generatedAt)) {
     throw new Error('생성 시각이 올바르지 않습니다.');
   }
   if (data.sourceUrl !== 'https://www.dhlottery.co.kr/lt645/result') {

@@ -24,6 +24,7 @@ describe('parseDrawDataset', () => {
     ['draw gap', { ...valid, latestDraw: 3, draws: [valid.draws[0], { ...valid.draws[1], drawNo: 3 }] }],
     ['invalid calendar date', { ...valid, draws: [{ ...valid.draws[0], drawDate: '2002-02-29' }, valid.draws[1]] }],
     ['non-increasing draw date', { ...valid, draws: [valid.draws[0], { ...valid.draws[1], drawDate: '2002-12-07' }] }],
+    ['normalized invalid generation timestamp', { ...valid, generatedAt: '2026-02-31T00:00:00.000Z' }],
   ])('rejects %s', (_name, raw) => {
     expect(() => parseDrawDataset(raw)).toThrow();
   });
