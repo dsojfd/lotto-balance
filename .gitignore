@@ -7,3 +7,5 @@ coverage/
 playwright-report/
 test-results/
 *.log
+public/data/analysis.json
+public/data/backtest.json

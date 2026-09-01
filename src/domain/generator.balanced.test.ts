@@ -4,6 +4,7 @@ import type { Combination, Draw } from './draw';
 import {
   buildShapeModel,
   generateBalancedPortfolio,
+  generateBalancedPortfolioFromModel,
   scoreCombination,
   selectDiverseCandidates,
 } from './generator';
@@ -192,6 +193,24 @@ describe('balanced portfolio generation', () => {
     } finally {
       mathRandom.mockRestore();
     }
+  });
+
+  it('produces exactly the public generator result when given its prebuilt shape model', () => {
+    const options = { avoidPopular: true };
+    const fromDraws = generateBalancedPortfolio(
+      5,
+      trainingDraws,
+      new SeededRandomSource(8642),
+      options,
+    );
+    const fromModel = generateBalancedPortfolioFromModel(
+      5,
+      buildShapeModel(trainingDraws),
+      new SeededRandomSource(8642),
+      options,
+    );
+
+    expect(fromModel).toEqual(fromDraws);
   });
 
   it('fails visibly within the existing per-target retry budget for a degenerate source', () => {

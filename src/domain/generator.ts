@@ -162,6 +162,15 @@ export function generateBalancedPortfolio(
   source: RandomSource,
   options: BalancedOptions,
 ): Combination[] {
+  return generateBalancedPortfolioFromModel(count, buildShapeModel(draws), source, options);
+}
+
+export function generateBalancedPortfolioFromModel(
+  count: 1 | 5 | 10,
+  model: ShapeModel,
+  source: RandomSource,
+  options: BalancedOptions,
+): Combination[] {
   const candidateCount = Math.max(2500, count * 500);
   const maxAttempts = candidateCount * 100;
   const candidates: Combination[] = [];
@@ -180,7 +189,6 @@ export function generateBalancedPortfolio(
     throw new Error('고유한 추천번호를 생성하지 못했습니다.');
   }
 
-  const model = buildShapeModel(draws);
   return selectDiverseCandidates(
     candidates,
     count,

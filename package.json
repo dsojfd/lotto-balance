@@ -15,7 +15,8 @@
     "preview": "vite preview",
     "e2e": "playwright test",
     "data:bootstrap": "tsx scripts/updateDraws.ts --bootstrap",
-    "data:update": "tsx scripts/updateDraws.ts"
+    "data:update": "tsx scripts/updateDraws.ts",
+    "reports:build": "tsx scripts/buildReports.ts"
   },
   "keywords": [],
   "author": "",
