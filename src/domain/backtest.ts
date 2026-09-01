@@ -354,6 +354,7 @@ export function parseBacktestReport(raw: unknown): BacktestReport {
   const totalGamesPerMode = raw.evaluation.totalGamesPerMode;
   if (!Number.isInteger(targetCount)
     || (targetCount as number) <= 0
+    || targetCount !== (raw.latestDraw as number) - config.minimumTrainingDraws
     || raw.evaluation.gamesPerPortfolio !== config.gamesPerPortfolio
     || raw.evaluation.portfoliosPerTarget !== config.portfoliosPerTarget
     || !Number.isInteger(totalGamesPerMode)

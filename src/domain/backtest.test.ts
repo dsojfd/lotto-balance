@@ -89,4 +89,25 @@ describe('walk-forward backtest', () => {
 
     expect(() => parseBacktestReport(malformed)).toThrow();
   });
+
+  it('rejects a tampered latest draw when the evaluation target count is unchanged', () => {
+    const report = runBacktest(draws, smallConfig);
+
+    expect(() => parseBacktestReport({
+      ...report,
+      latestDraw: 9_999,
+    })).toThrow();
+  });
+
+  it('rejects a tampered minimum training count when the evaluation metrics are unchanged', () => {
+    const report = runBacktest(draws, smallConfig);
+
+    expect(() => parseBacktestReport({
+      ...report,
+      config: {
+        ...report.config,
+        minimumTrainingDraws: 3,
+      },
+    })).toThrow();
+  });
 });
