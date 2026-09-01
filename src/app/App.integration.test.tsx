@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, it } from 'vitest';
 import type { AnalysisFileReport, AppDataState, BacktestFileReport } from '../data/appData';
+import { SavedPortfolioStore } from '../data/savedPortfolios';
 import type { AnalysisWindow } from '../domain/analysis';
 import { App } from './App';
 
@@ -74,4 +75,28 @@ it('switches from recommendation to analysis and verification tabs with tab sema
   await user.keyboard('{ArrowRight}');
   expect(screen.getByRole('tab', { name: '저장' })).toHaveFocus();
   expect(screen.getByRole('tab', { name: '저장' })).toHaveAttribute('aria-selected', 'true');
+});
+
+it('reads the latest device records each time the saved tab is opened', async () => {
+  const user = userEvent.setup();
+  localStorage.clear();
+  const store = new SavedPortfolioStore(localStorage);
+  render(<App loadData={() => Promise.resolve(appData)} savedPortfolioStore={store} />);
+
+  await user.click(await screen.findByRole('tab', { name: '저장' }));
+  expect(screen.getByText('저장된 조합이 없습니다.')).toBeVisible();
+
+  await user.click(screen.getByRole('tab', { name: '추천' }));
+  store.save({
+    id: 'newly-saved',
+    schemaVersion: 1,
+    targetDrawNo: 1202,
+    mode: 'balanced',
+    createdAt: '2026-08-30T13:00:00.000Z',
+    combinations: [[1, 8, 17, 28, 34, 45]],
+  });
+  await user.click(screen.getByRole('tab', { name: '저장' }));
+
+  expect(screen.getByRole('article', { name: 'newly-saved 저장 기록' })).toBeVisible();
+  expect(screen.getByText('추첨 전')).toBeVisible();
 });

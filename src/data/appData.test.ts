@@ -61,8 +61,8 @@ function cacheBundle(storage: Storage): void {
 }
 
 function responseFor(url: string): Response {
-  if (url === '/data/draws.json') return new Response(JSON.stringify(dataset));
-  if (url === '/data/analysis.json') return new Response(JSON.stringify(analysis));
+  if (url === './data/draws.json') return new Response(JSON.stringify(dataset));
+  if (url === './data/analysis.json') return new Response(JSON.stringify(analysis));
   return new Response(JSON.stringify(backtest));
 }
 
@@ -78,9 +78,9 @@ describe('loadAppData', () => {
 
     expect(state).toMatchObject({ dataset, analysis, backtest, isOfflineFallback: false });
     expect(calls).toEqual([
-      ['/data/draws.json', { cache: 'no-store' }],
-      ['/data/analysis.json', { cache: 'no-store' }],
-      ['/data/backtest.json', { cache: 'no-store' }],
+      ['./data/draws.json', { cache: 'no-store' }],
+      ['./data/analysis.json', { cache: 'no-store' }],
+      ['./data/backtest.json', { cache: 'no-store' }],
     ]);
     expect(cacheKeys.map((key) => storage.getItem(key))).toEqual([
       JSON.stringify(dataset), JSON.stringify(analysis), JSON.stringify(backtest),
@@ -103,7 +103,7 @@ describe('loadAppData', () => {
     const mismatchedAnalysis = { ...analysis, generatedAt: '2026-09-01T00:00:01.000Z' };
 
     const state = await loadAppData(async (url) => {
-      if (url === '/data/analysis.json') return new Response(JSON.stringify(mismatchedAnalysis));
+      if (url === './data/analysis.json') return new Response(JSON.stringify(mismatchedAnalysis));
       return responseFor(String(url));
     }, storage);
 
@@ -122,8 +122,8 @@ describe('loadAppData', () => {
     const newerBacktest = { ...backtest, generatedAt };
 
     const state = await loadAppData(async (url) => {
-      if (url === '/data/draws.json') return new Response(JSON.stringify(newerDataset));
-      if (url === '/data/analysis.json') return new Response(JSON.stringify(newerAnalysis));
+      if (url === './data/draws.json') return new Response(JSON.stringify(newerDataset));
+      if (url === './data/analysis.json') return new Response(JSON.stringify(newerAnalysis));
       return new Response(JSON.stringify(newerBacktest));
     }, storage);
 

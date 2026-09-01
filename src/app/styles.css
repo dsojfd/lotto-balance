@@ -66,6 +66,20 @@ summary { min-height: 44px; cursor: pointer; color: var(--ink); font-weight: 700
 .match-distribution { grid-template-columns: repeat(2, minmax(0, 1fr)); font-size: .88rem; }
 .verification-interval { display: grid; gap: .7rem; }
 .verification-conclusion { border-left: 4px solid var(--accent); padding-left: .7rem; font-weight: 800; }
+.saved-screen { display: grid; gap: 1rem; }
+.saved-screen .section-heading > :last-child { margin-bottom: 0; color: var(--muted); }
+.saved-empty, .saved-group, .saved-record { border: 1px solid var(--line); border-radius: 1rem; background: var(--surface); padding: 1rem; }
+.saved-empty { margin: 0; }
+.saved-groups, .saved-records { display: grid; gap: 1rem; }
+.saved-group > h3 { margin-bottom: .8rem; }
+.saved-record-heading { display: flex; flex-wrap: wrap; gap: .75rem; align-items: start; justify-content: space-between; }
+.saved-record-heading h4 { margin: 0 0 .25rem; }
+.saved-record-heading p { margin: 0; color: var(--muted); font-size: .85rem; }
+.saved-actions { display: flex; flex-wrap: wrap; gap: .4rem; }
+.saved-actions button { min-height: 40px; padding: .35rem .65rem; }
+.saved-combinations { display: grid; gap: .75rem; margin: 1rem 0 0; padding: 0; list-style: none; }
+.saved-combinations li { border-top: 1px solid var(--line); padding-top: .75rem; }
+.saved-combinations li > p { margin: .55rem 0 0; color: var(--muted); font-size: .88rem; font-weight: 700; }
 .bottom-nav { position: fixed; z-index: 2; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .25rem; border-top: 1px solid var(--line); background: color-mix(in srgb, var(--surface) 94%, transparent); padding: .45rem max(.5rem, calc((100% - 760px) / 2)); backdrop-filter: blur(12px); }
 .bottom-nav button { display: grid; place-items: center; gap: .1rem; min-width: 0; min-height: 52px; border: 0; background: transparent; font-size: .75rem; } .bottom-nav button span { font-size: 1rem; }
 @media (min-width: 600px) { .app-shell { padding-inline: 1.5rem; } .button-group { display: flex; } .button-group button { padding-inline: 1rem; } .analysis-window-controls { display: flex; flex-wrap: wrap; } .analysis-window-controls button:last-child { grid-column: auto; } .number-analysis-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } .metric-grid, .verification-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { loadAppData, type AppDataState } from '../data/appData';
 import { SavedPortfolioStore } from '../data/savedPortfolios';
 import type { RandomSource } from '../domain/random';
 import { AnalysisScreen } from '../features/analysis/AnalysisScreen';
 import { RecommendScreen } from '../features/recommend/RecommendScreen';
+import { SavedScreen } from '../features/saved/SavedScreen';
 import { VerificationScreen } from '../features/verification/VerificationScreen';
 import { StatusBanner } from '../ui/StatusBanner';
 import './styles.css';
@@ -14,7 +15,7 @@ type Tab = typeof tabs[number];
 interface AppProps {
   loadData?: () => Promise<AppDataState>;
   randomSourceFactory?: () => RandomSource;
-  savedPortfolioStore?: Pick<SavedPortfolioStore, 'save'>;
+  savedPortfolioStore?: Pick<SavedPortfolioStore, 'save'> & Partial<Pick<SavedPortfolioStore, 'list' | 'delete'>>;
 }
 
 function formatUpdatedAt(value: string): string {
@@ -26,7 +27,11 @@ export function App({ loadData = loadAppData, randomSourceFactory, savedPortfoli
   const [data, setData] = useState<AppDataState>();
   const [error, setError] = useState<string>();
   const [tab, setTab] = useState<Tab>('추천');
-  const store = savedPortfolioStore ?? new SavedPortfolioStore(localStorage);
+  const deviceStore = useMemo(() => new SavedPortfolioStore(localStorage), []);
+  const store = savedPortfolioStore ?? deviceStore;
+  const readableStore = store.list && store.delete
+    ? store as Pick<SavedPortfolioStore, 'list' | 'delete'>
+    : deviceStore;
 
   function selectTab(nextTab: Tab): void {
     setTab(nextTab);
@@ -81,7 +86,11 @@ export function App({ loadData = loadAppData, randomSourceFactory, savedPortfoli
             <VerificationScreen report={data.backtest} />
           </section>
         )}
-        {data && tab === '저장' && <section role="tabpanel" id="panel-저장" aria-labelledby="tab-저장" className="future-tab" aria-live="polite"><h2>{tab}</h2><p>이 화면은 준비 중입니다.</p></section>}
+        {data && tab === '저장' && (
+          <section role="tabpanel" id="panel-저장" aria-labelledby="tab-저장">
+            <SavedScreen dataset={data.dataset} store={readableStore} />
+          </section>
+        )}
       </div>
 
       <nav className="bottom-nav" aria-label="주요 메뉴" role="tablist">

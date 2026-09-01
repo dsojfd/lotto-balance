@@ -171,7 +171,7 @@ function readCachedBundle(storage: Storage): AppDataBundle | undefined {
 }
 
 async function fetchNetworkBundle(fetcher: AppDataFetcher): Promise<AppDataBundle> {
-  const urls = ['/data/draws.json', '/data/analysis.json', '/data/backtest.json'] as const;
+  const urls = ['./data/draws.json', './data/analysis.json', './data/backtest.json'] as const;
   const responses = await Promise.all(urls.map(async (url) => {
     const response = await fetcher(url, { cache: 'no-store' });
     if (!response.ok) throw new Error(`${url} 요청이 실패했습니다.`);
