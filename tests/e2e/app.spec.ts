@@ -50,8 +50,16 @@ test('all main screens fit without horizontal overflow at 320px', async ({ page 
   await page.getByRole('button', { name: '추천번호 생성' }).click();
   await expect(page.locator('[aria-label^="추천 조합 "]')).toHaveCount(10);
 
-  for (const tab of ['추천', '분석', '검증', '저장']) {
+  for (const tab of ['추천', '분석', '예상게임', '저장']) {
     await page.getByRole('tab', { name: tab, exact: true }).click();
+    if (tab === '예상게임') {
+      await page.getByRole('button', { name: '완전 랜덤' }).click();
+      await page.getByRole('button', { name: '100게임' }).click();
+      await page.getByRole('button', { name: '게임번호 생성' }).click();
+      await expect(page.locator('[aria-label^="가상 구매 조합 "]')).toHaveCount(100);
+      await page.getByRole('button', { name: '추첨 시작' }).click();
+      await expect(page.getByRole('heading', { name: '가상 당첨번호' })).toBeVisible();
+    }
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   }
 });
@@ -75,12 +83,18 @@ test('user switches the analysis window', async ({ page }) => {
   await expect(page.getByText('집계 회차 10회')).toBeVisible();
 });
 
-test('user can read the verification conclusion', async ({ page }) => {
+test('user generates games before revealing a virtual draw', async ({ page }) => {
   await openApp(page);
-  await page.getByRole('tab', { name: '검증' }).click();
+  await page.getByRole('tab', { name: '예상게임' }).click();
+  await page.getByRole('button', { name: '완전 랜덤' }).click();
+  await page.getByRole('button', { name: '20게임' }).click();
+  await page.getByRole('button', { name: '게임번호 생성' }).click();
 
-  await expect(page.getByText('무작위 대비 우위 확인 안 됨', { exact: true })).toBeVisible();
-  await expect(page.getByLabel('평균 일치 수 차이 불확실성')).toContainText('95% 구간');
+  await expect(page.locator('[aria-label^="가상 구매 조합 "]')).toHaveCount(20);
+  await expect(page.getByRole('heading', { name: '가상 당첨번호' })).toHaveCount(0);
+  await page.getByRole('button', { name: '추첨 시작' }).click();
+  await expect(page.getByRole('heading', { name: '가상 당첨번호' })).toBeFocused();
+  await expect(page.getByRole('button', { name: '다시 도전' })).toBeVisible();
 });
 
 test('saved games remain after a reload', async ({ page }) => {
