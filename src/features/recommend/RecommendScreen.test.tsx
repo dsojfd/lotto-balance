@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, expect, it } from 'vitest';
 import { SavedPortfolioStore } from '../../data/savedPortfolios';
@@ -22,6 +22,12 @@ function renderedCards(): HTMLElement[] {
 }
 
 beforeEach(() => window.localStorage.clear());
+
+it('shows the exact fixed-combination disclosure before generation', () => {
+  render(<RecommendScreen dataset={validDataset} randomSourceFactory={() => new SeededRandomSource(3)} />);
+
+  expect(screen.getByText('모든 고정 조합의 1등 확률은 동일합니다 (1/8,145,060)')).toBeVisible();
+});
 
 it('defaults to five balanced games and generates five distinct sorted cards', async () => {
   const user = userEvent.setup();
@@ -95,6 +101,24 @@ it('shows the next draw, exact disclosure, and saves every generated line as one
   expect(screen.getByText('추천 조합을 저장했습니다.')).toBeVisible();
 });
 
+it('keeps a balanced result provenance when controls change before saving', async () => {
+  const user = userEvent.setup();
+  const store = new SavedPortfolioStore(window.localStorage);
+  render(<RecommendScreen dataset={validDataset} randomSourceFactory={() => new SeededRandomSource(8)} savedPortfolioStore={store} />);
+
+  await user.click(screen.getByRole('button', { name: '추천번호 생성' }));
+  const originalScores = renderedCards().map((card) => within(card).getByText('조합 형태 점수').parentElement?.textContent);
+  expect(originalScores.every(Boolean)).toBe(true);
+
+  await user.click(screen.getByRole('button', { name: '무작위 추천' }));
+  await user.click(screen.getByRole('checkbox', { name: '많이 고르는 형태 피하기' }));
+
+  expect(screen.getByText('균형·분산 추천 결과')).toBeVisible();
+  expect(renderedCards().map((card) => within(card).getByText('조합 형태 점수').parentElement?.textContent)).toEqual(originalScores);
+  await user.click(screen.getByRole('button', { name: '전체 저장' }));
+  expect(store.list()[0]).toMatchObject({ mode: 'balanced' });
+});
+
 it('keeps generated cards visible and shows a Korean error when saving fails', async () => {
   const user = userEvent.setup();
   const failingStore = { save: () => { throw new Error('quota'); } } as Pick<SavedPortfolioStore, 'save'>;
@@ -107,7 +131,7 @@ it('keeps generated cards visible and shows a Korean error when saving fails', a
   expect(screen.getByRole('alert')).toHaveTextContent('추천 조합을 저장하지 못했습니다.');
 });
 
-it('shows a Korean error when secure random generation is unavailable', async () => {
+it('keeps the exact disclosure visible when secure random generation is unavailable', async () => {
   const user = userEvent.setup();
   const failingSource: RandomSource = { nextInt: () => { throw new Error('안전한 난수를 사용할 수 없습니다.'); } };
   render(<RecommendScreen dataset={validDataset} randomSourceFactory={() => failingSource} />);
@@ -116,4 +140,5 @@ it('shows a Korean error when secure random generation is unavailable', async ()
   await user.click(screen.getByRole('button', { name: '추천번호 생성' }));
 
   expect(screen.getByRole('alert')).toHaveTextContent('안전한 난수를 사용할 수 없습니다.');
+  expect(screen.getByText('모든 고정 조합의 1등 확률은 동일합니다 (1/8,145,060)')).toBeVisible();
 });

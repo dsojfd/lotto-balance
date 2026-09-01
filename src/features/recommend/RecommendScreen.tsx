@@ -9,6 +9,12 @@ import { PortfolioView } from './PortfolioView';
 type RecommendMode = 'balanced' | 'random';
 type GameCount = 1 | 5 | 10;
 
+interface GeneratedPortfolio {
+  combinations: Combination[];
+  mode: RecommendMode;
+  avoidPopular: boolean;
+}
+
 interface RecommendScreenProps {
   dataset: DrawDataset;
   randomSourceFactory?: () => RandomSource;
@@ -29,7 +35,7 @@ export function RecommendScreen({
   const [mode, setMode] = useState<RecommendMode>('balanced');
   const [gameCount, setGameCount] = useState<GameCount>(5);
   const [avoidPopular, setAvoidPopular] = useState(false);
-  const [portfolio, setPortfolio] = useState<Combination[]>([]);
+  const [result, setResult] = useState<GeneratedPortfolio>();
   const [generationError, setGenerationError] = useState<string>();
   const [saveError, setSaveError] = useState<string>();
   const [saveMessage, setSaveMessage] = useState<string>();
@@ -44,25 +50,25 @@ export function RecommendScreen({
       const nextPortfolio = mode === 'balanced'
         ? generateBalancedPortfolio(gameCount, dataset.draws, source, { avoidPopular })
         : generateRandomPortfolio(gameCount, source);
-      setPortfolio(nextPortfolio);
+      setResult({ combinations: nextPortfolio, mode, avoidPopular });
     } catch (error) {
       setGenerationError(userFacingError(error, '추천번호를 생성하지 못했습니다. 다시 시도해 주세요.'));
     }
   }
 
   function saveAll(): void {
-    if (portfolio.length === 0 || !savedPortfolioStore) return;
+    if (!result || !savedPortfolioStore) return;
     setSaveError(undefined);
     setSaveMessage(undefined);
     try {
       const createdAt = new Date().toISOString();
       savedPortfolioStore.save({
-        id: `${targetDrawNo}:${portfolio.map((combination) => combination.join('-')).join('|')}`,
+        id: `${targetDrawNo}:${result.combinations.map((combination) => combination.join('-')).join('|')}`,
         schemaVersion: 1,
         targetDrawNo,
-        mode,
+        mode: result.mode,
         createdAt,
-        combinations: portfolio,
+        combinations: result.combinations,
       });
       setSaveMessage('추천 조합을 저장했습니다.');
     } catch {
@@ -109,18 +115,18 @@ export function RecommendScreen({
       {generationError && <StatusBanner tone="error">{generationError}</StatusBanner>}
       {saveError && <StatusBanner tone="error">{saveError}</StatusBanner>}
       {saveMessage && <StatusBanner>{saveMessage}</StatusBanner>}
+      <p className="probability-disclosure">모든 고정 조합의 1등 확률은 동일합니다 (1/8,145,060)</p>
 
-      {portfolio.length > 0 && (
+      {result && (
         <section className="recommend-results" aria-live="polite">
           <div className="results-heading">
             <div>
               <p className="eyebrow">제{targetDrawNo}회 추천</p>
-              <h2>{mode === 'balanced' ? '균형·분산 추천 결과' : '무작위 추천 결과'}</h2>
+              <h2>{result.mode === 'balanced' ? '균형·분산 추천 결과' : '무작위 추천 결과'}</h2>
             </div>
             <button type="button" onClick={saveAll}>전체 저장</button>
           </div>
-          <PortfolioView combinations={portfolio} draws={dataset.draws} mode={mode} avoidPopular={avoidPopular} />
-          <p className="probability-disclosure">모든 고정 조합의 1등 확률은 동일합니다 (1/8,145,060)</p>
+          <PortfolioView combinations={result.combinations} draws={dataset.draws} mode={result.mode} avoidPopular={result.avoidPopular} />
         </section>
       )}
     </section>
