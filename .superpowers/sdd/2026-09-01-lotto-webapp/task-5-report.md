@@ -71,3 +71,55 @@ Each npm invocation printed the existing PowerShell `npm.ps1` warning about deni
 
 - `generateRandomPortfolio` assumes a supplied source eventually yields a new combination; a deliberately constant source would not terminate. This is appropriate for the contract's real random sources, but callers should not pass a degenerate source.
 - The PowerShell npm wrapper warning is environmental and did not affect exit status or verification results.
+
+## Fix Round 1
+
+### Root cause
+
+`generateRandomPortfolio` previously retried duplicates with an unconditional `while (portfolio.length < count)` loop. A conforming `RandomSource` that repeatedly returned zero therefore produced the same combination forever and could hang the caller.
+
+### Covering test
+
+`src/domain/generator.random.test.ts` now supplies a deterministic constant-zero `RandomSource`. It permits exactly `5 * 100 * 6` underlying `nextInt` calls (six values per candidate) and then throws, so the old implementation fails safely without an unbounded test process. The fixed implementation must stop after `count * 100` candidate attempts and throw `고유한 추천번호를 생성하지 못했습니다.`.
+
+### TDD RED/GREEN evidence
+
+RED was captured against the pre-fix loop:
+
+```text
+npm test -- src/domain/generator.random.test.ts
+exit 1; 3 passed, 1 failed
+Expected: 고유한 추천번호를 생성하지 못했습니다.
+Received: source exhausted
+```
+
+GREEN after adding the bounded attempt budget:
+
+```text
+npm test -- src/domain/random.test.ts src/domain/generator.random.test.ts
+exit 0; Test Files 2 passed (2); Tests 20 passed (20)
+```
+
+### Fix verification
+
+```text
+npm test
+exit 0; Test Files 7 passed (7); Tests 63 passed (63)
+
+npm run typecheck
+exit 0; tsc --noEmit
+
+npm run build
+exit 0; vite v8.2.2; 15 modules transformed; build completed in 92ms
+
+git diff --check
+exit 0
+```
+
+### Files and self-review
+
+- `src/domain/generator.ts`: cap candidate attempts at `count * 100` and throw the required visible error when incomplete.
+- `src/domain/generator.random.test.ts`: constant-source termination regression test.
+- `.superpowers/sdd/2026-09-01-lotto-webapp/task-5-report.md`: this Fix Round 1 evidence.
+
+The cap counts candidate combinations, not individual `nextInt` calls. Valid seeded and crypto sources remain unaffected except for guaranteed termination, and no deferred type-assertion cleanup was included.

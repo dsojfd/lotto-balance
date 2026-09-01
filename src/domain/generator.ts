@@ -19,8 +19,9 @@ export function generateRandomPortfolio(
 ): Combination[] {
   const portfolio: Combination[] = [];
   const seen = new Set<string>();
+  const maxAttempts = count * 100;
 
-  while (portfolio.length < count) {
+  for (let attempts = 0; attempts < maxAttempts && portfolio.length < count; attempts += 1) {
     const combination = drawUniformCombination(source);
     const key = combinationKey(combination);
     if (seen.has(key)) continue;
@@ -28,6 +29,8 @@ export function generateRandomPortfolio(
     seen.add(key);
     portfolio.push(combination);
   }
+
+  if (portfolio.length < count) throw new Error('고유한 추천번호를 생성하지 못했습니다.');
 
   return portfolio;
 }
