@@ -61,7 +61,15 @@ export async function fetchOfficialDraws(
   if (!body || typeof body !== 'object' || Array.isArray(body)) {
     throw new Error('공식 응답 본문이 객체가 아닙니다.');
   }
-  const data = (body as Record<string, unknown>).data;
+  const envelope = body as Record<string, unknown>;
+  if (!Object.hasOwn(envelope, 'resultCode')
+    || !Object.hasOwn(envelope, 'resultMessage')
+    || envelope.resultCode !== null
+    || envelope.resultMessage !== null) {
+    throw new Error('공식 응답 상태가 성공이 아닙니다.');
+  }
+
+  const data = envelope.data;
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
     throw new Error('공식 응답에 data 객체가 없습니다.');
   }

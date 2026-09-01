@@ -52,6 +52,25 @@ describe('fetchOfficialDraws', () => {
     await expect(fetchOfficialDraws(1202, fetcher)).resolves.toEqual([]);
   });
 
+  it('rejects an empty list when the official status fields are missing', async () => {
+    const fetcher = (async () => new Response(JSON.stringify({
+      data: { list: [] },
+    }), { status: 200 })) as typeof fetch;
+
+    await expect(fetchOfficialDraws(1202, fetcher)).rejects.toThrow();
+  });
+
+  it.each([
+    ['a non-null result code', { resultCode: 'ERROR', resultMessage: null, data: { list: [] } }],
+    ['a non-null result message', { resultCode: null, resultMessage: '조회 실패', data: { list: [] } }],
+  ])('rejects %s even when the response contains an empty list', async (_name, body) => {
+    const fetcher = (async () => new Response(JSON.stringify(body), {
+      status: 200,
+    })) as typeof fetch;
+
+    await expect(fetchOfficialDraws(1202, fetcher)).rejects.toThrow();
+  });
+
   it('rejects a missing official list instead of treating it as no result', async () => {
     const fetcher = (async () => new Response(JSON.stringify({ data: {} }), {
       status: 200,
