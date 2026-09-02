@@ -54,14 +54,60 @@ test('all main screens fit without horizontal overflow at 320px', async ({ page 
     await page.getByRole('tab', { name: tab, exact: true }).click();
     if (tab === '예상게임') {
       await page.getByRole('button', { name: '완전 랜덤' }).click();
-      await page.getByRole('button', { name: '100게임' }).click();
+      await page.getByRole('button', { name: '500게임' }).click();
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
       await page.getByRole('button', { name: '게임번호 생성' }).click();
-      await expect(page.locator('[aria-label^="가상 구매 조합 "]')).toHaveCount(100);
+      await expect(page.locator('[aria-label^="가상 구매 조합 "]')).toHaveCount(500);
       await page.getByRole('button', { name: '추첨 시작' }).click();
       await expect(page.getByRole('heading', { name: '가상 당첨번호' })).toBeVisible();
     }
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   }
+});
+
+test('expected game counts form four aligned columns across two mobile rows', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await openApp(page);
+  await page.getByRole('tab', { name: '예상게임' }).click();
+
+  const buttons = page.getByRole('group', { name: '게임 수' }).getByRole('button');
+  await expect(buttons).toHaveCount(8);
+  const boxes = await Promise.all(
+    Array.from({ length: 8 }, (_, index) => buttons.nth(index).boundingBox()),
+  );
+  const visibleBoxes = boxes.filter((box): box is NonNullable<typeof box> => box !== null);
+  expect(visibleBoxes).toHaveLength(8);
+  const firstRow = visibleBoxes.slice(0, 4);
+  const secondRow = visibleBoxes.slice(4);
+
+  expect(new Set(firstRow.map((box) => box.y))).toHaveProperty('size', 1);
+  expect(new Set(secondRow.map((box) => box.y))).toHaveProperty('size', 1);
+  expect(secondRow[0].y).toBeGreaterThan(firstRow[0].y);
+  expect(firstRow.map((box) => box.x)).toEqual(secondRow.map((box) => box.x));
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+test('five hundred analysis games do not repeatedly block the main thread', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 });
+  await openApp(page);
+  await page.getByRole('tab', { name: '예상게임' }).click();
+  await page.getByRole('button', { name: '500게임' }).click();
+  await page.evaluate(() => {
+    const durations: number[] = [];
+    Object.assign(window, { __simulationLongTasks: durations });
+    new PerformanceObserver((list) => {
+      durations.push(...list.getEntries().map((entry) => entry.duration));
+    }).observe({ type: 'longtask', buffered: true });
+  });
+
+  await page.getByRole('button', { name: '게임번호 생성' }).click();
+  await expect(page.locator('[aria-label^="가상 구매 조합 "]')).toHaveCount(500, { timeout: 30000 });
+  const repeatedLongTasks = await page.evaluate(() => (
+    (window as Window & { __simulationLongTasks: number[] }).__simulationLongTasks
+      .filter((duration) => duration >= 80).length
+  ));
+
+  expect(repeatedLongTasks).toBeLessThan(3);
 });
 
 test('user generates ten games with the random method', async ({ page }) => {

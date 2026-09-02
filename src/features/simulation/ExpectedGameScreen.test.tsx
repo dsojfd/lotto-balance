@@ -48,9 +48,29 @@ describe('ExpectedGameScreen', () => {
     expect(screen.getByRole('button', { name: '다시 도전' })).toBeVisible();
   });
 
-  it('shows progress while generating one hundred analysis games', async () => {
+  it('offers the full count range and generates five hundred random games', async () => {
     const user = userEvent.setup();
     render(<ExpectedGameScreen draws={history} randomSourceFactory={() => new SeededRandomSource(19)} />);
+
+    expect(Array.from(
+      screen.getByRole('group', { name: '게임 수' }).querySelectorAll('button'),
+      (button) => button.textContent,
+    )).toEqual(['10게임', '20게임', '50게임', '100게임', '200게임', '300게임', '400게임', '500게임']);
+    await user.click(screen.getByRole('button', { name: '완전 랜덤' }));
+    await user.click(screen.getByRole('button', { name: '500게임' }));
+    await user.click(screen.getByRole('button', { name: '게임번호 생성' }));
+
+    expect(screen.getByRole('button', { name: '게임번호 생성 중' })).toBeDisabled();
+    expect(await screen.findAllByRole(
+      'listitem',
+      { name: /가상 구매 조합/ },
+      { timeout: 5000 },
+    )).toHaveLength(500);
+  });
+
+  it('shows progress while generating one hundred analysis games', async () => {
+    const user = userEvent.setup();
+    render(<ExpectedGameScreen draws={history} randomSourceFactory={() => new SeededRandomSource(23)} />);
 
     await user.click(screen.getByRole('button', { name: '100게임' }));
     await user.click(screen.getByRole('button', { name: '게임번호 생성' }));

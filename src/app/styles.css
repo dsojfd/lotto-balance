@@ -66,7 +66,7 @@ summary { min-height: 44px; cursor: pointer; color: var(--ink); font-weight: 700
 .pair-list { display: grid; gap: .3rem; margin: .75rem 0 0; padding-left: 1.5rem; font-size: .9rem; }
 .simulation-controls, .simulation-games, .simulation-result { display: grid; gap: 1rem; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface); padding: 1rem; }
 .simulation-controls .button-group { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.simulation-counts .button-group { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.simulation-controls .simulation-counts .button-group { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .simulation-game-list { display: grid; gap: .35rem; margin: 0; padding: 0; list-style: none; }
 .simulation-game-list li { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr) auto; gap: .45rem; align-items: center; min-width: 0; border-top: 1px solid var(--line); padding: .55rem 0; }
 .simulation-game-list li:first-child { border-top: 0; }

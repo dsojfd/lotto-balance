@@ -12,6 +12,7 @@ import {
 } from '../../domain/simulation';
 import { LottoBall } from '../../ui/LottoBall';
 import { StatusBanner } from '../../ui/StatusBanner';
+import { startSimulationWorker } from './simulationWorkerClient';
 
 interface ExpectedGameScreenProps {
   draws: readonly Draw[];
@@ -32,7 +33,7 @@ function yieldToBrowser(): Promise<void> {
 export function ExpectedGameScreen(_props: ExpectedGameScreenProps) {
   const {
     draws,
-    randomSourceFactory = () => new CryptoRandomSource(),
+    randomSourceFactory,
     drawRandomSourceFactory = () => new CryptoRandomSource(),
   } = _props;
   const [mode, setMode] = useState<SimulationMode>('balanced');
@@ -42,6 +43,7 @@ export function ExpectedGameScreen(_props: ExpectedGameScreenProps) {
   const [error, setError] = useState<string>();
   const [isGenerating, setIsGenerating] = useState(false);
   const resultHeadingRef = useRef<HTMLHeadingElement>(null);
+  const activeWorkerRef = useRef<Worker | null>(null);
   const summary = useMemo(
     () => games && virtualResult ? summarizeSimulation(games, virtualResult) : undefined,
     [games, virtualResult],
@@ -50,6 +52,8 @@ export function ExpectedGameScreen(_props: ExpectedGameScreenProps) {
   useEffect(() => {
     if (virtualResult) resultHeadingRef.current?.focus();
   }, [virtualResult]);
+
+  useEffect(() => () => activeWorkerRef.current?.terminate(), []);
 
   function changeMode(nextMode: SimulationMode): void {
     setMode(nextMode);
@@ -70,14 +74,22 @@ export function ExpectedGameScreen(_props: ExpectedGameScreenProps) {
     setVirtualResult(undefined);
     setIsGenerating(true);
     try {
-      setGames(await generateSimulationPortfolioAsync(
-        gameCount,
-        mode,
-        draws,
-        randomSourceFactory(),
-        yieldToBrowser,
-      ));
+      if (randomSourceFactory) {
+        setGames(await generateSimulationPortfolioAsync(
+          gameCount,
+          mode,
+          draws,
+          randomSourceFactory(),
+          yieldToBrowser,
+        ));
+      } else {
+        const run = startSimulationWorker(gameCount, mode, draws);
+        activeWorkerRef.current = run.worker;
+        setGames(await run.result);
+        if (activeWorkerRef.current === run.worker) activeWorkerRef.current = null;
+      }
     } catch (caught) {
+      activeWorkerRef.current = null;
       setGames(undefined);
       setError(caught instanceof Error ? caught.message : '게임번호를 생성하지 못했습니다.');
     } finally {
@@ -120,7 +132,7 @@ export function ExpectedGameScreen(_props: ExpectedGameScreenProps) {
           <fieldset className="simulation-counts">
             <legend>게임 수</legend>
             <div className="button-group">
-              {([10, 20, 30, 50, 100] as const).map((count) => (
+              {([10, 20, 50, 100, 200, 300, 400, 500] as const).map((count) => (
                 <button key={count} type="button" disabled={isGenerating} aria-pressed={gameCount === count} onClick={() => changeCount(count)}>{count}게임</button>
               ))}
             </div>

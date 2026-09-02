@@ -7,7 +7,7 @@ import {
 import type { RandomSource } from './random';
 import { checkCombination } from './rank';
 
-export type SimulationGameCount = 10 | 20 | 30 | 50 | 100;
+export type SimulationGameCount = 10 | 20 | 50 | 100 | 200 | 300 | 400 | 500;
 export type SimulationMode = 'balanced' | 'random';
 
 export interface VirtualResult {
