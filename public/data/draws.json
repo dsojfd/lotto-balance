@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-10-18T00:02:09.937Z",
-  "latestDraw": 1246,
+  "generatedAt": "2026-10-24T16:39:52.067Z",
+  "latestDraw": 1247,
   "sourceUrl": "https://www.dhlottery.co.kr/lt645/result",
   "draws": [
     {
@@ -16201,6 +16201,19 @@
         28
       ],
       "bonus": 6
+    },
+    {
+      "drawNo": 1247,
+      "drawDate": "2026-10-24",
+      "numbers": [
+        8,
+        14,
+        21,
+        22,
+        42,
+        45
+      ],
+      "bonus": 24
     }
   ]
 }
